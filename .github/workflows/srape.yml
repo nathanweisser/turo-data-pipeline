@@ -2,18 +2,22 @@ name: Daily Turo Scrape
 
 on:
   schedule:
-    - cron: '0 3 * * *' # Runs at 3:00 AM every day
-  workflow_dispatch: # Allows you to run it manually for testing
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+# This line gives the script permission to save the file
+permissions:
+  contents: write 
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
@@ -23,11 +27,9 @@ jobs:
       - name: Run Scraper
         run: python scraper.py
 
-      - name: Native SFTP Upload
-        run: |
-          sudo apt-get install -y sshpass
-          export SSHPASS="${{ secrets.FTP_PASSWORD }}"
-          sshpass -e sftp -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa,ssh-dss -P 2222 ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }} <<EOF
-          put turo_data.json public_html/turo-app/turo_data.json
-          bye
-          EOF
+      # This replaces all the SFTP stuff! It simply saves the file to your repo.
+      - name: Commit and Push updated JSON
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Automated daily Turo data update"
+          file_pattern: 'turo_data.json'
