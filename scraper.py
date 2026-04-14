@@ -1,6 +1,7 @@
 import requests
 import json
 
+# The URL from your HAR file
 SOURCE_URL = "https://api.calculatorstudio.co/document/turo-carculator-v2-0-C1IyJv75TfqzxJ9x0ewQQQ"
 
 def translate_data():
@@ -13,37 +14,42 @@ def translate_data():
         return
 
     cells = raw_data.get('cells', {})
-    clean_data = {
-        "hello_world": 99999,  # TEST ENTRY: This proves the script ran and saved!
-        "test_car": 12345
+    
+    # We initialize the JSON with some baseline info
+    debug_results = {
+        "debug_status": "searching",
+        "hello_world": "I am alive",
+        "found_cadillac_at": None,
+        "nearby_values": []
     }
 
-    # Identify all rows that contain car names and numbers
-    # We look for strings in column C (Make/Model) and numbers in column J (Earnings)
-    # These coordinates are based on the Cadillac entry found in your HAR file.
-    for cell_id, cell_obj in cells.items():
-        val = cell_obj.get('v')
-        
-        # 1. Find a car name (usually in Column C)
-        if isinstance(val, str) and cell_id.startswith('C'):
-            row_num = cell_id[1:] # e.g., "2688" from "C2688"
-            
-            # 2. Look for the corresponding earning value in Column J of that same row
-            earnings_key = f"J{row_num}"
-            if earnings_key in cells:
-                earnings_val = cells[earnings_key].get('v')
-                
-                # If we found a number, save it!
-                if isinstance(earnings_val, (int, float)):
-                    # Format name: "Cadillac Ats" -> "cadillac_ats"
-                    clean_key = val.strip().lower().replace(" ", "_")
-                    clean_data[clean_key] = int(earnings_val)
-
-    # Save the output
-    with open('turo_data.json', 'w') as f:
-        json.dump(clean_data, f, indent=2)
+    print("Searching for Cadillac CT6 to identify coordinates...")
     
-    print(f"Successfully translated {len(clean_data)} vehicles (including hello_world).")
+    # Iterate through every cell in the spreadsheet
+    for cell_id, cell_obj in cells.items():
+        val = str(cell_obj.get('v', ''))
+        
+        # Look for the Cadillac CT6 specifically
+        if "Cadillac" in val and "CT6" in val:
+            print(f"FOUND IT! Cadillac CT6 is in cell: {cell_id}")
+            debug_results["found_cadillac_at"] = cell_id
+            
+            # Extract the row number (e.g., '2688' from 'C2688')
+            row_num = ''.join(filter(str.isdigit, cell_id))
+            
+            # Scan columns A through M for this row to see where the money is
+            columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M']
+            for col in columns:
+                target_cell = f"{col}{row_num}"
+                if target_cell in cells:
+                    cell_val = cells[target_cell].get('v')
+                    debug_results["nearby_values"].append(f"{target_cell}: {cell_val}")
+
+    # Save to your GitHub Pages JSON file
+    with open('turo_data.json', 'w') as f:
+        json.dump(debug_results, f, indent=2)
+    
+    print("Debug data saved. Check your GitHub Pages URL.")
 
 if __name__ == "__main__":
     translate_data()
