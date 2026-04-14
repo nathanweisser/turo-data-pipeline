@@ -23,18 +23,12 @@ jobs:
       - name: Run Scraper
         run: python scraper.py
 
-      - name: FTP Deploy to Domain.com
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      - name: SFTP Deploy to Domain.com
+        uses: appleboy/scp-action@v0.1.7
         with:
-          server: ${{ secrets.FTP_SERVER }}
+          host: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftp 
-          port: 21
-          security: loose 
-          local-dir: ./
-          server-dir: ./public_html/turo-app/ 
-          exclude: |
-            **/.git*
-            **/.github*
-            scraper.py
+          port: 2222
+          source: "turo_data.json"
+          target: "./public_html/turo-app/"
