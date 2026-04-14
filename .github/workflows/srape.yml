@@ -31,4 +31,4 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           port: 2222
           source: "turo_data.json"
-          target: "./public_html/turo-app/"
+          target: "public_html/turo-app/"
