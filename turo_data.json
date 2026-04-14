@@ -1,4 +1,6 @@
 {
-  "hello_world": 99999,
-  "test_car": 12345
+  "debug_status": "searching",
+  "hello_world": "I am alive",
+  "found_cadillac_at": null,
+  "nearby_values": []
 }
