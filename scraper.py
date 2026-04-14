@@ -1,7 +1,6 @@
 import requests
 import json
 
-# The URL from your HAR file (Calculator Studio document)
 SOURCE_URL = "https://api.calculatorstudio.co/document/turo-carculator-v2-0-C1IyJv75TfqzxJ9x0ewQQQ"
 
 def translate_data():
@@ -9,31 +8,35 @@ def translate_data():
     response = requests.get(SOURCE_URL)
     raw_data = response.json()
 
-    # This dictionary will hold our clean "Car: Price" pairs
+    # The data is located inside a 'cells' dictionary
+    cells = raw_data.get('cells', {})
     clean_data = {}
 
-    # Calculator Studio stores data in a 'values' list. 
-    # We iterate through to find car names and their corresponding earnings.
-    # Note: We use lowercase and underscores to make matching in the extension easier.
+    # We need to find car names and their matched earnings.
+    # In this structure, car names are often in column 'C' 
+    # and estimated earnings are in column 'J'.
     
-    values = raw_data.get('values', [])
-    
-    # Based on the Cadillac CT6 example in your HAR:
-    # We are looking for the 'Make/Model' string and the 'Earnings' number.
-    for i in range(len(values)):
-        item = values[i]
-        # Logic to identify a car name row (Adjusting based on HAR structure)
-        if isinstance(item, str) and len(item) > 2:
-            # We look ahead for the next number which is usually the annual profit
-            for j in range(i + 1, i + 5): # Look in the next few cells
-                if j < len(values) and (isinstance(values[j], int) or isinstance(values[j], float)):
-                    car_key = item.replace(" ", "_").lower()
-                    clean_data[car_key] = int(values[j])
-                    break
+    # We iterate through all cells to find "Make Model" strings
+    for cell_id, cell_data in cells.items():
+        val = cell_data.get('v')
+        
+        # We are looking for strings that look like car names (e.g., "Cadillac Ats")
+        if isinstance(val, str) and cell_id.startswith('C'):
+            row_number = cell_id[1:] # Extract the row number (e.g., "2688")
+            
+            # Now look for the corresponding earnings in column 'J' of the same row
+            earnings_cell = f"J{row_number}"
+            if earnings_cell in cells:
+                earnings_val = cells[earnings_cell].get('v')
+                
+                if isinstance(earnings_val, (int, float)):
+                    # Create a clean key: "cadillac_ats"
+                    car_key = val.replace(" ", "_").lower().strip()
+                    clean_data[car_key] = int(earnings_val)
 
-    # Save the tiny translated file
+    # Save the file
     with open('turo_data.json', 'w') as f:
-        json.dump(clean_data, f)
+        json.dump(clean_data, f, indent=2)
     
     print(f"Successfully translated {len(clean_data)} vehicles.")
 
