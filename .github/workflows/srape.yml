@@ -1,0 +1,37 @@
+name: Daily Turo Scrape
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # Runs at 3:00 AM every day
+  workflow_dispatch: # Allows you to run it manually for testing
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run Scraper
+        run: python scraper.py
+
+      - name: FTP Deploy to Domain.com
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./
+          server-dir: ./turo-app/ # The folder on your site where the JSON will live
+          exclude: |
+            **/.git*
+            **/.github*
+            scraper.py
