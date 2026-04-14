@@ -23,5 +23,5 @@ jobs:
       - name: Run Scraper
         run: python scraper.py
 
-    - name: Pure SFTP Upload
+      - name: Pure SFTP Upload
         run: curl -k -T turo_data.json sftp://${{ secrets.FTP_SERVER }}:2222/public_html/turo-app/turo_data.json --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}"
