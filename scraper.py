@@ -1,13 +1,12 @@
 import requests
 import json
 
-# This is the verified data source from your HAR file
 SOURCE_URL = "https://api.calculatorstudio.co/document/turo-carculator-v2-0-C1IyJv75TfqzxJ9x0ewQQQ"
 
 def translate_data():
     print("Fetching Turo data source...")
     try:
-        # Increase timeout to handle the large 1.4MB file
+        # Increased timeout for the large file
         response = requests.get(SOURCE_URL, timeout=60)
         raw_data = response.json()
     except Exception as e:
@@ -16,38 +15,41 @@ def translate_data():
 
     cells = raw_data.get('cells', {})
     clean_data = {
-        "last_updated": "2026-04-14", # Proves the update worked
-        "data_source": "Verified Column C/J Mapping"
+        "last_updated": "2026-04-14",
+        "debug_total_cells": len(cells)
     }
 
-    print("Mapping car names from Column C to earnings in Column J...")
-
-    # We iterate through the cells looking for car names in Column C
-    # Based on the HAR, Cadillac is at C2805 and its earnings are at J2805
+    # Identify all rows by scanning the cell keys (e.g., "C5230" -> row 5230)
+    rows = {}
     for cell_id, cell_obj in cells.items():
-        val = cell_obj.get('v')
+        # Extract the letter (column) and number (row)
+        col = "".join([c for c in cell_id if c.isalpha()])
+        row = "".join([c for c in cell_id if c.isdigit()])
         
-        # Look for cells in Column C that contain car name strings
-        if isinstance(val, str) and cell_id.startswith('C'):
-            # Extract row number (e.g., '2805' from 'C2805')
-            row_num = ''.join(filter(str.isdigit, cell_id))
-            
-            # The earnings are consistently in Column J of the same row
-            earnings_key = f"J{row_num}"
-            if earnings_key in cells:
-                earnings_val = cells[earnings_key].get('v')
-                
-                # Verify we found a valid number for earnings
-                if isinstance(earnings_val, (int, float)) and earnings_val > 100:
-                    # Clean the car name: "Cadillac ATS" -> "cadillac_ats"
-                    clean_key = val.strip().lower().replace(" ", "_")
-                    clean_data[clean_key] = int(earnings_val)
+        if row not in rows:
+            rows[row] = {}
+        rows[row][col] = cell_obj.get('v')
 
-    # Save the finalized JSON to your GitHub Pages folder
+    # Now we process each row to find car names and their earnings
+    for row_id, columns in rows.items():
+        # Standard car names in this data are in Column C
+        car_name = columns.get('C')
+        
+        if isinstance(car_name, str) and len(car_name) > 3:
+            # Look for earnings in Columns H, I, or J (common for this tool)
+            for col_letter in ['H', 'I', 'J', 'K']:
+                val = columns.get(col_letter)
+                # If we find a number that looks like annual earnings
+                if isinstance(val, (int, float)) and 3000 < val < 60000:
+                    clean_key = car_name.strip().lower().replace(" ", "_")
+                    clean_data[clean_key] = int(val)
+                    break
+
+    # Save the finalized JSON
     with open('turo_data.json', 'w') as f:
         json.dump(clean_data, f, indent=2)
     
-    print(f"Success! Translated {len(clean_data) - 2} vehicles.")
+    print(f"Successfully translated {len(clean_data) - 2} vehicles.")
 
 if __name__ == "__main__":
     translate_data()
