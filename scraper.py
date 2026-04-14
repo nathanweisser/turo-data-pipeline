@@ -1,55 +1,44 @@
 import requests
 import json
 
-# The URL from your HAR file
 SOURCE_URL = "https://api.calculatorstudio.co/document/turo-carculator-v2-0-C1IyJv75TfqzxJ9x0ewQQQ"
 
 def translate_data():
     print("Fetching Turo data source...")
-    try:
-        response = requests.get(SOURCE_URL, timeout=30)
-        raw_data = response.json()
-    except Exception as e:
-        print(f"Error fetching data: {e}")
-        return
-
+    response = requests.get(SOURCE_URL)
+    raw_data = response.json()
     cells = raw_data.get('cells', {})
-    
-    # We initialize the JSON with some baseline info
-    debug_results = {
-        "debug_status": "searching",
-        "hello_world": "I am alive",
-        "found_cadillac_at": None,
-        "nearby_values": []
+
+    debug_dump = {
+        "debug_status": "dumping_samples",
+        "sample_cells": []
     }
 
-    print("Searching for Cadillac CT6 to identify coordinates...")
-    
-    # Iterate through every cell in the spreadsheet
+    # Grab the first 100 cells that have text in them
+    count = 0
     for cell_id, cell_obj in cells.items():
-        val = str(cell_obj.get('v', ''))
-        
-        # Look for the Cadillac CT6 specifically
-        if "Cadillac" in val and "CT6" in val:
-            print(f"FOUND IT! Cadillac CT6 is in cell: {cell_id}")
-            debug_results["found_cadillac_at"] = cell_id
-            
-            # Extract the row number (e.g., '2688' from 'C2688')
-            row_num = ''.join(filter(str.isdigit, cell_id))
-            
-            # Scan columns A through M for this row to see where the money is
-            columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M']
-            for col in columns:
-                target_cell = f"{col}{row_num}"
-                if target_cell in cells:
-                    cell_val = cells[target_cell].get('v')
-                    debug_results["nearby_values"].append(f"{target_cell}: {cell_val}")
+        val = cell_obj.get('v')
+        if val and isinstance(val, str) and len(val) > 1:
+            debug_dump["sample_cells"].append(f"{cell_id}: {val}")
+            count += 1
+        if count >= 100:
+            break
 
-    # Save to your GitHub Pages JSON file
+    # Also grab any cell that looks like a high dollar amount (e.g., 5000+)
+    debug_dump["potential_earnings"] = []
+    e_count = 0
+    for cell_id, cell_obj in cells.items():
+        val = cell_obj.get('v')
+        if isinstance(val, (int, float)) and 3000 < val < 50000:
+            debug_dump["potential_earnings"].append(f"{cell_id}: {val}")
+            e_count += 1
+        if e_count >= 50:
+            break
+
     with open('turo_data.json', 'w') as f:
-        json.dump(debug_results, f, indent=2)
+        json.dump(debug_dump, f, indent=2)
     
-    print("Debug data saved. Check your GitHub Pages URL.")
+    print("Sample data dumped. Check your URL.")
 
 if __name__ == "__main__":
     translate_data()
