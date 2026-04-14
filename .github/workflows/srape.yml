@@ -27,7 +27,7 @@ jobs:
         run: |
           sudo apt-get install -y sshpass
           export SSHPASS="${{ secrets.FTP_PASSWORD }}"
-          sshpass -e sftp -o StrictHostKeyChecking=no -P 2222 ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }} <<EOF
+          sshpass -e sftp -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa,ssh-dss -P 2222 ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }} <<EOF
           put turo_data.json public_html/turo-app/turo_data.json
           bye
           EOF
