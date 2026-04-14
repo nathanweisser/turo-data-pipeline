@@ -23,5 +23,11 @@ jobs:
       - name: Run Scraper
         run: python scraper.py
 
-      - name: Pure SFTP Upload
-        run: curl -k -T turo_data.json sftp://${{ secrets.FTP_SERVER }}:2222/public_html/turo-app/turo_data.json --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}"
+      - name: Native SFTP Upload
+        run: |
+          sudo apt-get install -y sshpass
+          export SSHPASS="${{ secrets.FTP_PASSWORD }}"
+          sshpass -e sftp -o StrictHostKeyChecking=no -P 2222 ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }} <<EOF
+          put turo_data.json public_html/turo-app/turo_data.json
+          bye
+          EOF
