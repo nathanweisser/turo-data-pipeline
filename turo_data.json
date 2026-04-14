@@ -1,6 +1,5 @@
 {
-  "debug_status": "searching",
-  "hello_world": "I am alive",
-  "found_cadillac_at": null,
-  "nearby_values": []
+  "debug_status": "dumping_samples",
+  "sample_cells": [],
+  "potential_earnings": []
 }
