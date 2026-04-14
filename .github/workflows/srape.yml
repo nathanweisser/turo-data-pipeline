@@ -29,8 +29,11 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftp 
+          port: 21
+          security: loose 
           local-dir: ./
-          server-dir: ./turo-app/ # The folder on your site where the JSON will live
+          server-dir: ./public_html/turo-app/ 
           exclude: |
             **/.git*
             **/.github*
